@@ -1,85 +1,74 @@
 # adb-speaker
 
-Streams Linux desktop playback into a temporary Android `AudioTrack` process.
-The receiver is compiled locally, pushed as DEX and launched with `app_process`.
-No browser, root, APK installation or TCP forwarding is involved.
+My laptop speakers broke, so I built this to use my Android phone as a speaker.
+It sends Linux desktop audio to the phone over ADB, without installing an Android app.
 
-Tested on the connected POCO 23122PCD1G, Android 16 / API 36. The three-note test
-was confirmed audible by the owner. A ten-second desktop capture reached the
-built-in speaker with 478,080 played frames and no reported buffer underruns.
-End-to-end latency and screen-off operation have not yet been measured.
+## Installation
 
-The receiver requests Android's low-latency path and limits its effective buffer
-to 1,440 frames (30 ms), down from the original 7,688 frames (about 160 ms).
-Capture requests 5 ms latency with 5 ms processing chunks; receiver reads are
-also 5 ms. The phone accepted low-latency mode. A 480-frame buffer produced 10
-underruns in 30 seconds; 960 frames produced zero in 20 seconds but one on a
-30-second retest, so the default leaves more headroom. The final 1,440-frame
-setting completed a 30-second test with zero reported underruns. These sizes
-do not measure total laptop-to-speaker delay; stability under load may differ.
+You need Linux, Python 3, `adb`, and `parec`, with PulseAudio or PipeWire's
+PulseAudio compatibility server running. The Android receiver is included;
+Java and the Android SDK are only needed if you change its source.
 
-Capture starts only after the Android receiver signals readiness, preventing
-audio from queuing during receiver startup. A missing readiness signal times out
-after ten seconds. A local capture-only check saw median delivery intervals drop
-from about 10.65 ms to 5.33 ms with the smaller capture request; this does not
-measure acoustic latency. The existing PulseAudio capture remains in use.
-The combined readiness/5 ms capture version completed a 30-second phone test
-with one reported underrun; glitch-free operation is not yet established.
+1. Download or clone this repository and open its directory.
+2. Enable USB debugging on your phone, connect it by USB, and approve the debugging prompt.
+3. Check that `adb devices` lists your phone as `device`.
+4. Start streaming:
 
-## Run
+   ```bash
+   python3 speaker.py stream
+   ```
 
-From this repository:
+For the shorter `adb-speaker` command, run these from the repo:
 
 ```bash
-# Three ascending notes. Be ready to listen before running it.
-python3 speaker.py tone
-
-# Copy current laptop playback to the phone until Ctrl+C.
-python3 speaker.py stream
-
-# Full receiver gain (the default is 25%).
-python3 speaker.py stream --gain 1
-
-# Stop automatically after ten seconds.
-python3 speaker.py stream --seconds 10
+mkdir -p ~/.local/bin
+chmod +x speaker.py
+ln -s "$PWD/speaker.py" ~/.local/bin/adb-speaker
 ```
 
-Only one authorized ADB device may be connected unless `--serial SERIAL` is set.
-`ANDROID_SERIAL` is also supported. USB debugging authorization is needed once.
+Keep the repo in place and make sure `~/.local/bin` is on your `PATH`.
 
-The receiver defaults to 25% gain without changing the phone's system volume.
-For normal receiver gain, add `--gain 1`; adjust carefully using the current media
-volume on the phone. The laptop's existing output is copied, not muted or rerouted.
-The capture source is the playback monitor, not the microphone.
-
-Requirements: Python 3, adb, parec (PulseAudio or
-PipeWire's PulseAudio compatibility), javac and Android SDK platform/build-tools.
-Set `ANDROID_SDK_ROOT` or `ANDROID_HOME` if the SDK is outside `~/Android/Sdk`.
-The first run builds `build/classes.dex`; later runs reuse it until Java changes.
-
-Each session removes `/data/local/tmp/daemontalk-adb-speaker.dex` when it finishes.
-If the USB cable is removed or the host is killed, cleanup cannot be guaranteed.
-After reconnecting, remove a leftover file with:
+## Usage
 
 ```bash
-adb shell unlink /data/local/tmp/daemontalk-adb-speaker.dex
+adb-speaker stream                  # Play desktop audio on the phone
+adb-speaker stream --watch          # Show audio statistics
+adb-speaker tone                    # Play three test notes
+adb-speaker --help                  # Show all options
 ```
 
-Sessions are serialized with a local lock. Cleanup targets only the unique
-receiver process launched by that session. No phone packages or persistent phone
-settings are changed. Laptop build files remain in the ignored `build/` directory.
+Adjust the listening volume on your phone. Streaming uses full receiver gain;
+`--gain 0.5` lowers it to 50%. Test tones default to 25% gain.
 
-## Scope
+If several phones are connected, select one with `--serial SERIAL`, using the
+serial shown by `adb devices`. One streaming session can run at a time.
 
-Audio is raw stereo 48 kHz / signed 16-bit little-endian PCM, about 192 KB/s.
-There is no video receiver yet. Android/OEM audio routing and power management
-can differ; compatibility with other phones is not established by this test.
-A speaker route and played frames confirm the audio pipeline, not an acoustic
-latency measurement. Avoid forwarding the phone back into the same desktop output,
-which would create an audio loop.
+Press Ctrl+C to stop. If the cable disconnects, reconnect it and run the command again.
 
-Host-side lifecycle tests use fake adb/parec and never contact a phone:
+## How it works
 
-```bash
-python3 -m unittest discover -s . -p 'test_*.py'
+```text
+Desktop audio → PulseAudio/PipeWire monitor → parec → ADB → AudioTrack → Phone
 ```
+
+The program pushes a small DEX receiver to the phone and starts it with
+`app_process`. Audio travels as uncompressed stereo PCM at 48 kHz. Python manages
+the processes; the audio flows directly from capture to ADB. The receiver is
+removed when the session ends normally.
+
+The watcher shows data rate, effective buffer size, and Android's underrun count.
+It does not measure the delay between the laptop and the speaker.
+
+Tested on a POCO 23122PCD1G running Android 16. Other phones and screen-off
+playback still need verification; end-to-end latency has not been reliably measured.
+
+## References
+
+- [Android Developers: AudioTrack](https://developer.android.com/reference/android/media/AudioTrack)
+- [Android Developers: ADB](https://developer.android.com/tools/adb)
+- [PipeWire: pw-cat](https://docs.pipewire.org/page_man_pw-cat_1.html)
+
+## License
+
+Copyright (c) 2026 dafagareth. [MIT](LICENSE).
+External tools and libraries retain their own licenses.
