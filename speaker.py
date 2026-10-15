@@ -19,7 +19,7 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parent
-REMOTE = '/data/local/tmp/daemontalk-adb-speaker.dex'
+REMOTE = '/data/local/tmp/adb-speaker.dex'
 RATE = 48000
 
 
@@ -94,9 +94,18 @@ def stop(process):
 
 def wait_ready(receiver, timeout=10):
     # Do not capture during Android startup: that backlog adds persistent delay.
-    ready, _, _ = select.select([receiver.stdout], [], [], timeout)
-    if not ready or receiver.stdout.readline() != b'READY\n':
-        raise RuntimeError('The phone receiver did not become ready; see its error above.')
+    deadline = time.monotonic() + timeout
+    for expected in b'READY\n':
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        ready, _, _ = select.select([receiver.stdout], [], [], remaining)
+        # readline() can block past the deadline when only part of a line arrives.
+        if not ready or os.read(receiver.stdout.fileno(), 1) != bytes([expected]):
+            break
+    else:
+        return
+    raise RuntimeError('The phone receiver did not become ready; see its error above.')
 
 
 def device_connected(adb):
