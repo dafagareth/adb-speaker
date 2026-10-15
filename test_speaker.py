@@ -5,6 +5,9 @@ import importlib.util
 import contextlib
 import fcntl
 import io
+import hashlib
+import struct
+from types import SimpleNamespace
 import json
 import os
 from pathlib import Path
@@ -12,7 +15,7 @@ import tempfile
 import subprocess
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('speaker', HERE / 'speaker.py')
@@ -127,6 +130,147 @@ time.sleep(30)
             if process.stdout is not None:
                 process.stdout.close()
 
+    def test_readiness_handles_partial_eof_and_invalid_messages(self):
+        for message in (b'READY\n', b'REA', b'', b'ERROR\n'):
+            with self.subTest(message=message):
+                read_fd, write_fd = os.pipe()
+                with os.fdopen(read_fd, 'rb') as reader:
+                    os.write(write_fd, message)
+                    os.close(write_fd)
+                    receiver = SimpleNamespace(stdout=reader)
+                    if message == b'READY\n':
+                        speaker.wait_ready(receiver, timeout=1)
+                    else:
+                        with self.assertRaisesRegex(RuntimeError, 'did not become ready'):
+                            speaker.wait_ready(receiver, timeout=1)
+
+    def test_partial_readiness_does_not_block_waiting_for_newline(self):
+        read_fd, write_fd = os.pipe()
+        try:
+            os.write(write_fd, b'REA')
+            # Bound the whole test even if readline() regresses and hangs.
+            code = ("import os, sys; from types import SimpleNamespace; import speaker; "
+                    "speaker.wait_ready(SimpleNamespace(stdout=os.fdopen(int(sys.argv[1]), 'rb')), .05)")
+            result = subprocess.run([sys.executable, '-c', code, str(read_fd)],
+                                    pass_fds=(read_fd,), cwd=HERE,
+                                    capture_output=True, text=True, timeout=5)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('did not become ready', result.stderr)
+        finally:
+            os.close(read_fd)
+            os.close(write_fd)
+
+    def test_bundled_receiver_and_local_build_selection(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / 'AdbSpeaker.java'
+            source.write_text('// fixture')
+            assets = root / 'assets'
+            assets.mkdir()
+            bundled = assets / 'receiver.dex'
+            bundled.write_bytes(b'dex fixture')
+            manifest = assets / 'receiver.sha256'
+            manifest.write_text(hashlib.sha256(source.read_bytes()).hexdigest())
+            with patch.object(speaker, 'ROOT', root), \
+                 patch.object(speaker.Path, 'home', return_value=root), \
+                 patch.dict(os.environ, {'ANDROID_HOME': '', 'ANDROID_SDK_ROOT': ''}), \
+                 patch.object(speaker.shutil, 'which', return_value=None), \
+                 patch.object(speaker.subprocess, 'run') as run:
+                self.assertEqual(speaker.build(), bundled)
+                run.assert_not_called()
+                manifest.write_text('mismatched source')
+                with self.assertRaisesRegex(RuntimeError, 'out of date'):
+                    speaker.build()
+                dex = root / 'build/classes.dex'
+                dex.parent.mkdir()
+                dex.touch()
+                os.utime(source, (100, 100))
+                os.utime(dex, (200, 200))
+                self.assertEqual(speaker.build(), dex)
+                os.utime(dex, (50, 50))
+                with self.assertRaisesRegex(RuntimeError, 'out of date'):
+                    speaker.build()
+
+    def test_device_selection(self):
+        for rows, expected in [('', None), ('one unauthorized\n', None),
+                               ('one device\ntwo device\n', None),
+                               ('one device\ntwo offline\n', 'one')]:
+            with self.subTest(rows=rows), patch.object(
+                    speaker.subprocess, 'check_output', return_value='List of devices attached\n' + rows):
+                if expected:
+                    self.assertEqual(speaker.choose_device(None), ['adb', '-s', expected])
+                else:
+                    with self.assertRaisesRegex(RuntimeError, 'exactly one authorized'):
+                        speaker.choose_device(None)
+        with patch.object(speaker.subprocess, 'run') as run:
+            self.assertEqual(speaker.choose_device('chosen'), ['adb', '-s', 'chosen'])
+            run.assert_called_once_with(['adb', '-s', 'chosen', 'get-state'],
+                                        check=True, stdout=subprocess.DEVNULL)
+        with patch.object(speaker.subprocess, 'run', side_effect=subprocess.CalledProcessError(1, 'adb')):
+            with self.assertRaises(subprocess.CalledProcessError):
+                speaker.choose_device('offline')
+
+    def test_held_session_lock_rejects_before_build(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock_dir = root / '.cache/adb-speaker'
+            lock_dir.mkdir(parents=True)
+            with (lock_dir / 'session.lock').open('a') as lock, \
+                 patch.object(speaker.Path, 'home', return_value=root), \
+                 patch.object(speaker, 'build') as build:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                with self.assertRaisesRegex(RuntimeError, 'already running'):
+                    speaker.receive(['adb'], 'tone', None)
+                build.assert_not_called()
+
+    def test_invalid_numeric_arguments_fail_before_connecting(self):
+        for option, value in [('--gain', 'nan'), ('--gain', '2'),
+                              ('--seconds', '0'), ('--seconds', 'inf')]:
+            with self.subTest(option=option, value=value), \
+                 patch.object(sys, 'argv', ['speaker.py', 'stream', option, value]), \
+                 patch.object(speaker, 'receive') as receive, \
+                 contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as error:
+                    speaker.main()
+                self.assertEqual(error.exception.code, 2)
+                receive.assert_not_called()
+
+    def test_playback_failures_stop_processes_and_clean_up(self):
+        for mode in ('tone', 'stream'):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                receiver = Mock()
+                receiver.poll.return_value = None
+                capture = Mock()
+                capture.poll.return_value = 1
+                receiver.communicate.side_effect = subprocess.TimeoutExpired('receiver', 15)
+                result = SimpleNamespace(returncode=0, stdout='')
+                with patch.object(speaker.Path, 'home', return_value=root), \
+                     patch.object(speaker, 'build', return_value=root / 'receiver.dex'), \
+                     patch.object(speaker, 'wait_ready'), \
+                     patch.object(speaker, 'device_connected', return_value=True), \
+                     patch.object(speaker.subprocess, 'run', return_value=result) as run, \
+                     patch.object(speaker.subprocess, 'Popen', side_effect=[receiver, capture]), \
+                     patch.object(speaker, 'stop') as stop:
+                    message = 'did not finish the tone' if mode == 'tone' else 'capture stopped unexpectedly'
+                    with self.assertRaisesRegex(RuntimeError, message):
+                        speaker.receive(['adb'], mode, None)
+                    if mode == 'tone':
+                        self.assertEqual(receiver.communicate.call_args.kwargs['timeout'], 15)
+                    else:
+                        stop.assert_any_call(capture)
+                    receiver.wait.assert_called_once_with(timeout=4)
+                    self.assertEqual(run.call_args.args[0], ['adb', 'shell', 'unlink', speaker.REMOTE])
+
+    def test_tone_has_complete_stereo_frames_and_bounded_amplitude(self):
+        pcm = speaker.tone()
+        self.assertEqual(len(pcm), int(speaker.RATE * 4.5) * 4)
+        frames = list(struct.iter_unpack('<hh', pcm))
+        self.assertTrue(all(left == right for left, right in frames))
+        peak = max(abs(left) for left, _ in frames)
+        self.assertGreater(peak, 0)
+        self.assertLessEqual(peak, 20000)
+
     def test_build_falls_back_from_stale_sdk_environment(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -147,7 +291,7 @@ time.sleep(30)
                 self.assertIn(str(sdk / 'platforms/android-37/android.jar'), run.call_args_list[0].args[0])
                 self.assertEqual(run.call_args_list[1].args[0][0], str(sdk / 'build-tools/36.0.0/d8'))
 
-    def test_transfer_and_failure_both_clean_up(self):
+    def test_transfer_and_rejection_before_and_after_ready_clean_up(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             calls = root / 'calls.jsonl'
@@ -161,8 +305,9 @@ if 'app_process' in sys.argv:
     print('READY', flush=True)
     payload = sys.stdin.buffer.read()
     assert len(payload) % 4 == 0 and len(payload) > 0
+    if os.environ.get('SPEAKER_TEST_REJECT') == 'after-ready': sys.exit(3)
 elif 'get-state' in sys.argv: print('device')
-elif 'pidof' in sys.argv: sys.exit(1)
+elif 'pidof' in sys.argv: print('12345 invalid 67890')
 ''')
             adb.chmod(0o755)
             with patch.dict(os.environ, {'SPEAKER_TEST_CALLS': str(calls)}), \
@@ -172,9 +317,16 @@ elif 'pidof' in sys.argv: sys.exit(1)
                 entries = [json.loads(line) for line in calls.read_text().splitlines()]
                 self.assertEqual(entries[-1], ['shell', 'unlink', speaker.REMOTE])
                 self.assertFalse(any('install' in entry for entry in entries))
-                with patch.dict(os.environ, {'SPEAKER_TEST_REJECT': '1'}):
-                    with self.assertRaisesRegex(RuntimeError, 'did not become ready'):
-                        speaker.receive([str(adb)], 'tone', None)
+                label = next(arg.split('=', 1)[1] for entry in entries for arg in entry
+                             if arg.startswith('--nice-name='))
+                self.assertIn(['shell', 'pidof', label], entries)
+                self.assertEqual([entry for entry in entries if 'kill' in entry],
+                                 [['shell', 'kill', '12345'], ['shell', 'kill', '67890']])
+                for rejection, message in [('1', 'did not become ready'),
+                                           ('after-ready', 'rejected audio playback')]:
+                    with patch.dict(os.environ, {'SPEAKER_TEST_REJECT': rejection}):
+                        with self.assertRaisesRegex(RuntimeError, message):
+                            speaker.receive([str(adb)], 'tone', None)
                 entries = [json.loads(line) for line in calls.read_text().splitlines()]
                 self.assertEqual(entries[-1], ['shell', 'unlink', speaker.REMOTE])
 
