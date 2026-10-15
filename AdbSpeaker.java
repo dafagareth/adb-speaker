@@ -76,7 +76,7 @@ public final class AdbSpeaker {
             }
             // Quiet proof-of-concept; leave the phone's global media volume unchanged.
             track.setVolume(gain);
-            track.play();
+            boolean playing = false;
             InputStream input = System.in;
             byte[] buffer = new byte[960];
             int pending = 0;
@@ -105,6 +105,11 @@ public final class AdbSpeaker {
                     }
                     offset += written;
                     bytes += written;
+                    if (!playing) {
+                        // Start only after PCM arrives, so capture startup cannot starve playback.
+                        track.play();
+                        playing = true;
+                    }
                 }
                 pending = available - aligned;
                 System.arraycopy(buffer, aligned, buffer, 0, pending);
