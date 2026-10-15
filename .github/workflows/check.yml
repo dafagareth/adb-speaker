@@ -1,0 +1,37 @@
+name: Check
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test host lifecycle
+        run: python -m unittest -v
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Compile Android receiver
+        run: |
+          sdkmanager 'platforms;android-35' 'build-tools;36.0.0'
+          mkdir -p build
+          javac --release 11 -classpath "$ANDROID_HOME/platforms/android-35/android.jar" -d build AdbSpeaker.java
+          "$ANDROID_HOME/build-tools/36.0.0/d8" --min-api 26 --output build build/AdbSpeaker.class
+      - name: Check bundled receiver source marker
+        run: |
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          source = hashlib.sha256(Path('AdbSpeaker.java').read_bytes()).hexdigest()
+          assert Path('assets/receiver.sha256').read_text().strip() == source, 'Bundled receiver source marker is stale'
+          PY
