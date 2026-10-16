@@ -1,0 +1,8 @@
+include Makefile speaker.py LICENSE CHANGELOG.md SECURITY.md
+recursive-include native *.java *.cpp *.hpp CMakeLists.txt
+recursive-include tests *.py *.cpp
+recursive-include scripts *.py
+recursive-include packaging *.py *.sh Dockerfile
+recursive-include docs *.md
+recursive-include .github *.yml
+include .dockerignore .gitignore
