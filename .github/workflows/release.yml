@@ -1,0 +1,54 @@
+name: Draft release
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Check workflow run ID
+        required: true
+      tag:
+        description: Existing version tag (for example v0.2.0)
+        required: true
+permissions:
+  actions: read
+  contents: write
+jobs:
+  draft:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate checked revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          run_id = os.environ['RUN_ID']
+          tag = os.environ['RELEASE_TAG']
+          if not run_id.isdigit() or not re.fullmatch(r'v\d+\.\d+\.\d+', tag):
+              raise SystemExit('Expected a numeric run ID and a vX.Y.Z tag.')
+          run = json.loads(subprocess.check_output(['gh','api',f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run_id}']))
+          sha = subprocess.check_output(['git','rev-list','-n','1',tag], text=True).strip()
+          if run['conclusion'] != 'success' or run['path'] != '.github/workflows/check.yml' or run['head_sha'] != sha:
+              raise SystemExit('Tag must match a successful Check run.')
+          source = subprocess.check_output(['git','show',f'{tag}:src/adb_speaker/__init__.py'],text=True)
+          if f'"{tag[1:]}"' not in source:
+              raise SystemExit('Tag and package version differ.')
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          path: artifacts
+      - name: Verify archives and create draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          (cd artifacts/adb-speaker-linux-x86_64 && sha256sum -c SHA256SUMS)
+          (cd artifacts/adb-speaker-windows-x86_64 && sha256sum -c SHA256SUMS)
+          cat artifacts/*/SHA256SUMS > artifacts/SHA256SUMS
+          gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_TAG" --notes 'Experimental build. Review CHANGELOG.md, hardware test results, and dependency redistribution requirements before publishing.' artifacts/*/*.tar.gz artifacts/*/*.zip artifacts/SHA256SUMS
