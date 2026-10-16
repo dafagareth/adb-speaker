@@ -1,0 +1,10 @@
+# Enforce LF line endings for text files across all operating systems
+* text=auto eol=lf
+
+# Binary files
+*.dex binary
+*.tar.gz binary
+*.zip binary
+*.exe binary
+*.dll binary
+*.so binary
