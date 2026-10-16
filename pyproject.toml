@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adb-speaker"
+dynamic = ["version"]
+description = "Use an Android phone as a desktop speaker over ADB"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{name = "dafagareth"}]
+keywords = ["audio", "speaker", "adb", "android", "wasapi", "pulseaudio"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Multimedia :: Sound/Audio",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/dafagareth/adb-speaker"
+Documentation = "https://github.com/dafagareth/adb-speaker/tree/main/docs"
+Issues = "https://github.com/dafagareth/adb-speaker/issues"
+Changelog = "https://github.com/dafagareth/adb-speaker/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = ["ruff==0.14.0", "build==1.3.0", "pyinstaller==6.16.0"]
+
+[project.scripts]
+adb-speaker = "adb_speaker.cli:run"
+
+[tool.setuptools.dynamic]
+version = {attr = "adb_speaker.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+adb_speaker = ["assets/*.dex", "assets/*.sha256"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
