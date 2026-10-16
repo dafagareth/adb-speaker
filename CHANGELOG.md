@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 — Unreleased (Experimental)
+## 0.2.0 — 2026-10-17 (Experimental)
 
 Changes since `v0.1.0`.
 
@@ -15,10 +15,12 @@ Changes since `v0.1.0`.
 - Select capture by OS and reject unsupported options. Removed `--capture pipewire`
   and `--priority`; `--watch` remains Linux-only.
 
-A 900-second screen-locked phone session was reported successful; Windows playback
-was demonstrated in a Windows 10 VM. Physical Windows hardware and total playback
-latency remain unverified. Windows capture supports mono/stereo at 48 kHz or below.
-One session per user; reconnect requires rerunning the command.
+A 900-second screen-locked phone session was reported successful. Windows playback
+was demonstrated in a Windows 10 VM; the Windows portable package was also tested
+in a Windows Server VM, with audio reported to sound comparable to Linux.
+Physical Windows hardware and measured end-to-end latency remain unverified.
+Windows capture supports mono/stereo at 48 kHz or below. One session per user;
+reconnect requires rerunning the command.
 
 ## 0.1.0 — Experimental
 

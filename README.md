@@ -22,9 +22,13 @@ flowchart LR
 
 ### Portable Releases (Recommended — Zero Dependencies)
 
-Extract the archive and run:
+Download a package from [Releases](https://github.com/dafagareth/adb-speaker/releases),
+extract it, and run from a terminal:
+
 - **Windows:** `.\adb-speaker.exe stream` (bundles Python, WASAPI capture helper, and ADB)
 - **Linux (x86_64, glibc 2.35+):** `./adb-speaker stream` (bundles Python, ADB, and `parec`; requires PulseAudio or PipeWire-Pulse)
+
+On Windows, double-clicking `adb-speaker.exe` shows help and closes; use CMD or PowerShell.
 
 ### From Source (pip install)
 
@@ -70,8 +74,9 @@ disconnect, reconnect and run again. One session can run per user.
   stream is active; it removes temporary receiver files.
 
 See [internals and development](docs/internals.md), [contributing](docs/internals.md#contributing),
-and [changelog](CHANGELOG.md). Windows physical hardware and total playback latency
-remain unverified.
+and [changelog](CHANGELOG.md). Windows playback has been tested in VMs, including
+the portable package in a Windows Server VM. Physical Windows hardware and measured
+end-to-end latency remain unverified.
 
 ## License
 
