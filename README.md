@@ -1,74 +1,78 @@
 # adb-speaker
 
-My laptop speakers broke, so I built this to use my Android phone as a speaker.
-It sends Linux desktop audio to the phone over ADB, without installing an Android app.
+My laptop speakers stopped working, so I built this to use my Android phone as a speaker.
+It sends desktop audio over USB with ADB, without installing an Android app.
+Version 0.2.0 is experimental on Linux and Windows.
 
-## Installation
-
-You need Linux, Python 3, `adb`, and `parec`, with PulseAudio or PipeWire's
-PulseAudio compatibility server running. The Android receiver is included;
-Java and the Android SDK are only needed if you change its source.
-
-1. Download or clone this repository and open its directory.
-2. Enable USB debugging on your phone, connect it by USB, and approve the debugging prompt.
-3. Check that `adb devices` lists your phone as `device`.
-4. Start streaming:
-
-   ```bash
-   python3 speaker.py stream
-   ```
-
-For the shorter `adb-speaker` command, run these from the repo:
-
-```bash
-mkdir -p ~/.local/bin
-chmod +x speaker.py
-ln -s "$PWD/speaker.py" ~/.local/bin/adb-speaker
+```mermaid
+flowchart LR
+    Desktop[Desktop audio] --> Capture[Host capture] --> ADB --> Receiver[Temporary Android receiver] --> Speaker[Phone speaker]
 ```
 
-Keep the repo in place and make sure `~/.local/bin` is on your `PATH`.
+## Setup
 
-## Usage
+1. Enable **USB debugging** on your phone (under Developer Options).
+2. Connect your phone via USB and tap **Allow** on the computer authorization prompt.
+3. Verify connection:
+   - With system ADB: `adb devices`
+   - With portable release: `.\_internal\bin\adb.exe devices` (Windows) or `./_internal/bin/adb devices` (Linux)
+   The phone should be listed as `device`.
 
-```bash
-adb-speaker stream                  # Play desktop audio on the phone
-adb-speaker stream --watch          # Show audio statistics
-adb-speaker tone                    # Play three test notes
-adb-speaker --help                  # Show all options
+## Install and Run
+
+### Portable Releases (Recommended — Zero Dependencies)
+
+Extract the archive and run:
+- **Windows:** `.\adb-speaker.exe stream` (bundles Python, WASAPI capture helper, and ADB)
+- **Linux (x86_64, glibc 2.35+):** `./adb-speaker stream` (bundles Python, ADB, and `parec`; requires PulseAudio or PipeWire-Pulse)
+
+### From Source (pip install)
+
+Building or running from source does not bundle external tools. Ensure prerequisites are installed:
+- **Linux:** Python 3.10+, `adb`, and `parec` (pulseaudio-utils) on PATH.
+- **Windows:** Python 3.10+, `adb` on PATH, and compiled [WASAPI helper](docs/internals.md#windows-helper) on PATH.
+
+```sh
+python -m pip install .
+adb-speaker stream
+# Or run without installing:
+python speaker.py stream
 ```
 
-Adjust the listening volume on your phone. Streaming uses full receiver gain;
-`--gain 0.5` lowers it to 50%. Test tones default to 25% gain.
+## Use
 
-If several phones are connected, select one with `--serial SERIAL`, using the
-serial shown by `adb devices`. One streaming session can run at a time.
-
-Press Ctrl+C to stop. If the cable disconnects, reconnect it and run the command again.
-
-## How it works
-
-```text
-Desktop audio → PulseAudio/PipeWire monitor → parec → ADB → AudioTrack → Phone
+```sh
+adb-speaker stream                 # Play desktop audio on the phone
+adb-speaker stream --watch         # Show audio statistics (Linux only)
+adb-speaker tone                   # Check phone playback
+adb-speaker stream --serial SERIAL # Choose one connected phone
+adb-speaker --help
 ```
 
-The program pushes a small DEX receiver to the phone and starts it with
-`app_process`. Audio travels as uncompressed stereo PCM at 48 kHz. Python manages
-the processes; the audio flows directly from capture to ADB. The receiver is
-removed when the session ends normally.
+Adjust the phone's media volume; `--gain 0.5` halves the receiver gain.
+Use `--seconds 60` for a timed stream. Ctrl+C stops playback. After a cable
+disconnect, reconnect and run again. One session can run per user.
 
-The watcher shows data rate, effective buffer size, and Android's underrun count.
-It does not measure the delay between the laptop and the speaker.
+## Troubleshooting
 
-Tested on a POCO 23122PCD1G running Android 16. Other phones and screen-off
-playback still need verification; end-to-end latency has not been reliably measured.
+- **Phone missing:** check the USB cable and the USB debugging authorization prompt.
+  On Linux, you may need Android udev rules. On Windows, if the phone is not listed,
+  install your manufacturer's [OEM USB Driver](https://developer.android.com/studio/run/oem-usb)
+  (or [Google USB Driver](https://developer.android.com/studio/run/win-usb) for Pixel devices).
+- **No sound:** check phone volume, then try `tone`. If it works, check desktop
+  capture; on Linux, `pactl info` should reach your audio server. Windows output
+  must be mono/stereo at 48 kHz or below.
+- **Audio gaps or delay:** try another cable or USB port and record a `--watch` log.
+  Compare underruns within one session. Packet age is not total playback latency.
+- **Session already running:** stop the existing process. An old lock file alone
+  does not hold the lock.
+- **Cleanup incomplete:** reconnect and run the printed cleanup command while no
+  stream is active; it removes temporary receiver files.
 
-## References
-
-- [Android Developers: AudioTrack](https://developer.android.com/reference/android/media/AudioTrack)
-- [Android Developers: ADB](https://developer.android.com/tools/adb)
-- [PipeWire: pw-cat](https://docs.pipewire.org/page_man_pw-cat_1.html)
+See [internals and development](docs/internals.md), [contributing](docs/internals.md#contributing),
+and [changelog](CHANGELOG.md). Windows physical hardware and total playback latency
+remain unverified.
 
 ## License
 
-Copyright (c) 2026 dafagareth. [MIT](LICENSE).
-External tools and libraries retain their own licenses.
+Copyright (c) 2026 dafagareth. [MIT](LICENSE). Bundled dependencies keep their own licenses.
