@@ -11,6 +11,7 @@
 import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
+import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.os.Process;
 import android.os.Debug;
@@ -88,11 +89,15 @@ public final class AdbSpeaker {
             boolean playing = false;
             InputStream input = System.in;
             DataInputStream packetInput = new DataInputStream(new BufferedInputStream(input, 4096));
+            AudioTimestamp stamp = new AudioTimestamp();
+            PlaybackDelay playbackDelay = new PlaybackDelay();
             long[] metadata = new long[3];
             long sequence = -1;
             long discarded = 0;
             long packetAge = 0;
             long maxPacketAge = 0;
+            long lastFrame = 0;
+            long lastStamp = 0;
             byte[] buffer = new byte[960];
             int pending = 0;
             long bytes = 0;
@@ -123,6 +128,8 @@ public final class AdbSpeaker {
                         continue;
                     }
                     // Timestamp 0 disables age checks when the host lacks a reliable clock sample.
+                    // ponytail: static 100 ms ceiling covers the 50 ms host queue plus up to 25 ms
+                    // one-way error from 50 ms RTT probes; tighten only if probe bounds shrink.
                     packetAge = metadata[2] == 0 ? 0 : Math.max(0, System.nanoTime() - metadata[2]);
                     maxPacketAge = Math.max(maxPacketAge, packetAge);
                     if (packetAge > 100_000_000L) {
@@ -150,10 +157,14 @@ public final class AdbSpeaker {
                         playing = true;
                     }
                 }
+                if (packets && aligned > 0) {
+                    lastFrame = (bytes - aligned) / FRAME_BYTES;
+                    lastStamp = metadata[2];
+                }
                 pending = available - aligned;
                 System.arraycopy(buffer, aligned, buffer, 0, pending);
                 if (watch) {
-                    // These counters describe AudioTrack input, not acoustic latency.
+                    // These counters describe AudioTrack input and HAL timestamps, not acoustic latency.
                     long now = System.nanoTime();
                     if (now - lastReport >= 1_000_000_000L) {
                         String status = String.format(Locale.ROOT,
@@ -162,10 +173,18 @@ public final class AdbSpeaker {
                                 (bytes - lastBytes) / 1024.0 / ((now - lastReport) / 1e9),
                                 bytes / 1048576.0, track.getBufferSizeInFrames() * 1000.0 / RATE,
                                 track.getUnderrunCount());
-                        if (packets) status += String.format(Locale.ROOT,
-                                " | packet_age %s | skipped %.1fms",
-                                metadata[2] == 0 ? "unknown" : String.format(Locale.ROOT, "%.1fms", packetAge / 1e6),
-                                discarded * 1000.0 / (RATE * FRAME_BYTES));
+                        if (packets) {
+                            // Query AudioTrack.getTimestamp() at 1 Hz report intervals rather than per packet
+                            // to avoid HAL binder overhead in the audio write loop.
+                            long latency = playbackDelay.estimate(playing && track.getTimestamp(stamp),
+                                    stamp.framePosition, stamp.nanoTime, System.nanoTime(),
+                                    track.getUnderrunCount(), lastFrame, lastStamp);
+                            status += String.format(Locale.ROOT,
+                                    " | packet_age %s | presentation_delay %s | skipped %.1fms",
+                                    metadata[2] == 0 ? "unknown" : String.format(Locale.ROOT, "%.1fms", packetAge / 1e6),
+                                    latency < 0 ? "unknown" : String.format(Locale.ROOT, "%.1fms", latency / 1e6),
+                                    discarded * 1000.0 / (RATE * FRAME_BYTES));
+                        }
                         System.err.print(terminal ? "\r\033[2K" + status : status + "\n");
                         System.err.flush();
                         lastReport = now;
