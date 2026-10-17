@@ -50,9 +50,14 @@ five accepted samples: round trip ≤50 ms, age <60 seconds. Two probes refresh 
 age rejection when no reliable sample remains.
 
 `--watch` shows throughput (~187.5 KiB/s), buffer size, and cumulative underruns.
-Linux adds `packet_age`, receiver drops (`skipped`), and host drops (`HOST`). Reports
-can stall with audio. Packet age excludes capture-server and speaker delay; audio
-clock drift is not corrected. Dropped audio can click.
+Linux adds `packet_age`, `presentation_delay`, receiver drops (`skipped`), and host
+drops (`HOST`). Presentation delay estimates the time from the host reading PCM to
+Android presenting it, using `AudioTrack.getTimestamp()`. It excludes earlier capture
+buffering and acoustic delay; it is not a physical DAC measurement. Clock mapping
+can be off by up to half the probe round trip under asymmetric transport delays.
+The estimate is `unknown` until timestamps advance, after an underrun or missing/stale
+timestamp, and when the computed delay is negative. Reports can stall with audio.
+Audio clock drift is not corrected. Dropped audio can click.
 
 ## Build and test
 
@@ -69,7 +74,8 @@ python scripts/receiver.py check
 ```
 
 `make help` lists Linux shortcuts. CI tests Python 3.10/3.12 on Linux and Windows,
-compiles native code, and builds packages. Device tests are manual.
+compiles native code, and builds packages. Host tests exercise the Java delay estimator
+when a JDK is available; device tests are manual.
 
 ### Windows helper
 
