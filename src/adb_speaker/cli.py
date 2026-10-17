@@ -74,7 +74,7 @@ Press Ctrl+C to stop playback. Adjust listening volume on the phone."""
     stream.add_argument(
         "--watch",
         action="store_true",
-        help="Show data rate, buffer size, and underruns (Linux only); does not measure latency.",
+        help="Show data rate, buffer size, underruns, and estimated presentation delay (Linux only).",
     )
     advanced = parser.add_argument_group("Advanced options")
     advanced.add_argument(
