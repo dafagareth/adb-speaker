@@ -1,7 +1,8 @@
 # adb-speaker
 
 My laptop speakers stopped working, so I built this to use my Android phone as a speaker.
-It sends desktop audio over USB with ADB, without installing an Android app.
+It sends desktop audio through ADB, without installing an Android app.
+USB is recommended; wireless ADB is experimental.
 Version 0.2.0 is experimental on Linux and Windows.
 
 ```mermaid
@@ -17,6 +18,31 @@ flowchart LR
    - With system ADB: `adb devices`
    - With portable release: `.\_internal\bin\adb.exe devices` (Windows) or `./_internal/bin/adb devices` (Linux)
    The phone should be listed as `device`.
+
+### Wireless ADB (experimental)
+
+On Android 11+, connect your computer and phone to the same Wi-Fi network.
+Enable **Wireless debugging** in Developer Options, select **Pair device with pairing
+code**, then run:
+
+```sh
+adb pair PHONE_IP:PAIRING_PORT
+adb connect PHONE_IP:CONNECTION_PORT
+adb devices
+```
+
+Enter the pairing code when prompted. Pairing and connection ports may differ;
+use the values shown on your phone. For portable releases, replace `adb` with
+`.\_internal\bin\adb.exe` (Windows) or `./_internal/bin/adb` (Linux).
+Once the connection is listed as `device`, stream to it:
+
+```sh
+adb-speaker stream --serial PHONE_IP:CONNECTION_PORT
+```
+
+For portable releases, use `.\adb-speaker.exe` (Windows) or `./adb-speaker` (Linux).
+Wireless streaming has been tested on Linux, with playback gaps and variable delay.
+See the [Android wireless ADB guide](https://developer.android.com/tools/adb#connect-to-a-device-over-wi-fi).
 
 ## Install and Run
 
@@ -66,7 +92,8 @@ disconnect, reconnect and run again. One session can run per user.
 - **No sound:** check phone volume, then try `tone`. If it works, check desktop
   capture; on Linux, `pactl info` should reach your audio server. Windows output
   must be mono/stereo at 48 kHz or below.
-- **Audio gaps or delay:** try another cable or USB port and record a `--watch` log.
+- **Audio gaps or delay:** try another cable or USB port; for wireless, compare with USB.
+  On Linux, record a `--watch` log.
   Compare underruns within one session. Packet age is not total playback latency.
 - **Session already running:** stop the existing process. An old lock file alone
   does not hold the lock.
