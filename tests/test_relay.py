@@ -23,7 +23,7 @@ from adb_speaker.protocol import PacketClock, PACKET_HEADER, PACKET_MAGIC
 
 @unittest.skipIf(os.name == "nt", "Linux pipe relay")
 class LinuxRelayTest(unittest.TestCase):
-    def test_periodic_probes_drain_capture_and_resume_with_original_timestamps(self):
+    def test_audio_resumes_after_second_probe_send_before_its_reply(self):
         now = [0]
         reads = []
         packets = []
@@ -36,16 +36,15 @@ class LinuxRelayTest(unittest.TestCase):
                 ([12], [], 11_002_000_000, b"SY"),
                 ([12], [], 11_002_000_000, b"NC 0 91001000000\n"),
                 ([], [11], 11_002_000_000, None),
-                ([12], [], 11_004_000_000, b"SYNC 1 91003000000\n"),
-                ([], [11], 11_004_000_000, None),
-                ([], [11], 11_004_000_000, None),
+                ([], [11], 11_003_000_000, None),
+                ([12], [11], 11_004_000_000, b"SYNC 1 91003000000\n"),
                 ([10], [], 11_004_000_000, b""),
             ]
         )
         clock = PacketClock()
 
         def select(readers, writers, errors, timeout):
-            if clock.probe is not None:
+            if clock.probe is not None and clock.probe[0] == 0:
                 self.assertEqual(writers, [], "Audio must wait for probe replies")
             ready, writable, stamp, data = next(events)
             self.assertTrue(set(writable).issubset(writers))
@@ -60,6 +59,8 @@ class LinuxRelayTest(unittest.TestCase):
             return data
 
         def write(fd, data):
+            if len(packets) == 2:
+                self.assertIsNotNone(clock.probe, "Resume before the second reply arrives")
             packets.append((PACKET_HEADER.unpack(data[:28]), data[28:]))
             return len(data)
 

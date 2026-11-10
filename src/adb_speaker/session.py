@@ -245,10 +245,10 @@ def stream_linux(adb, capture, receiver, seconds, watch, clock):
                 raise RuntimeError("The phone clock response stalled during playback.")
             if now >= next_sync and sync_rounds == 0:
                 sync_rounds = 2
-            # Drain capture while probes are outstanding. The second probe then measures
-            # the clocks without waiting behind previously queued audio playback.
+            # Drain old audio before probe two; later PCM cannot overtake its flushed reply.
             sync_due = sync_rounds > 0 and clock.probe is None
-            can_write = sync_due or (sync_rounds == 0 and len(pending) >= 4)
+            audio_ready = sync_rounds == 0 or (sync_rounds == 1 and clock.probe is not None)
+            can_write = sync_due or (audio_ready and len(pending) >= 4)
             readable, writable, _ = select.select(
                 [source, control], [destination] if can_write else [], [], min(0.1, remaining)
             )

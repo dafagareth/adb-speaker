@@ -42,6 +42,21 @@ class PacketClockTest(unittest.TestCase):
         self.sample(clock, 1_000_000_000, 1_500_000_000, 91_250_000_000)
         self.assertEqual(clock.timestamp(2_000_000_000, 2_000_000_000), 0)
 
+    def test_periodic_samples_bound_mapping_error_with_simulated_clock_drift(self):
+        for ppm in (-100, 100):
+            with self.subTest(ppm=ppm):
+                clock = PacketClock()
+
+                def phone_time(host_time):
+                    return 90_000_000_000 + host_time + host_time * ppm // 1_000_000
+
+                for second in range(0, 601, 10):
+                    sent = second * 1_000_000_000
+                    self.sample(clock, sent, sent + 2_000_000, phone_time(sent + 1_000_000))
+                    observed = sent + 9_000_000_000
+                    error = clock.timestamp(observed, observed) - phone_time(observed)
+                    self.assertLess(abs(error), 5_000_000)
+
     def test_bad_responses_are_rejected(self):
         for line in (b"", b"SYNC 9 123", b"SYNC a 1", b"BOGUS 0 123"):
             clock = PacketClock()

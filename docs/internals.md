@@ -46,8 +46,10 @@ Linux packets have a 28-byte big-endian header followed by little-endian PCM:
 Five startup probes get `SYNC <sequence> <phone_ns>` replies. Offset is
 `phone_ns - (host_send_ns + host_receive_ns) / 2`. Choose the lowest round trip from
 five accepted samples: round trip ≤50 ms, age <60 seconds. Two probes refresh every
-10 seconds while audio sending pauses and capture drains. Timestamp 0 disables
-age rejection when no reliable sample remains.
+10 seconds. Audio sending pauses until the first reply arrives and the second probe
+is sent; capture keeps draining. Audio then resumes while the second reply returns.
+The receiver flushes that reply before processing subsequent audio. Timestamp 0
+disables age rejection when no reliable sample remains.
 
 `--watch` shows throughput (~187.5 KiB/s), buffer size, and cumulative underruns.
 Linux adds `packet_age`, `presentation_delay`, receiver drops (`skipped`), and host
@@ -58,6 +60,8 @@ can be off by up to half the probe round trip under asymmetric transport delays.
 The estimate is `unknown` until timestamps advance, after an underrun or missing/stale
 timestamp, and when the computed delay is negative. Reports can stall with audio.
 Audio clock drift is not corrected. Dropped audio can click.
+
+See [performance checks](performance.md) for local results and the pending USB tests.
 
 ## Build and test
 
