@@ -74,13 +74,33 @@ def choose_device(serial):
     if serial:
         subprocess.run(["adb", "-s", serial, "get-state"], check=True, stdout=subprocess.DEVNULL)
         return ["adb", "-s", serial]
-    rows = subprocess.check_output(["adb", "devices"], text=True).splitlines()[1:]
-    devices = [
-        row.split()[0] for row in rows if len(row.split()) >= 2 and row.split()[1] == "device"
-    ]
-    if len(devices) != 1:
-        raise RuntimeError("Connect exactly one authorized device, or select it with --serial.")
-    return ["adb", "-s", devices[0]]
+    output = subprocess.check_output(["adb", "devices"], text=True)
+    rows = (line.split(maxsplit=2) for line in output.splitlines()[1:])
+    devices = [(row[0], row[1]) for row in rows if len(row) >= 2]
+    ready = [name for name, state in devices if state == "device"]
+    if len(ready) == 1:
+        return ["adb", "-s", ready[0]]
+    if ready:
+        raise RuntimeError(
+            f"More than one ADB device is ready ({', '.join(ready)}). "
+            "Select one with --serial SERIAL."
+        )
+    if not devices:
+        raise RuntimeError(
+            "No ADB devices found. Check the USB data cable and enable USB debugging."
+        )
+
+    states = {state for _, state in devices}
+    hints = []
+    if "unauthorized" in states:
+        hints.append(
+            "ADB device unauthorized. Unlock your phone and tap Allow on the USB debugging prompt."
+        )
+    if "offline" in states:
+        hints.append("ADB device offline. Reconnect the device and try again.")
+    raise RuntimeError(
+        " ".join(hints) or "No ADB device is ready. Check the status with adb devices."
+    )
 
 
 def tone():

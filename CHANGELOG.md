@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Show what to do when no ADB device is found, a device is unauthorized or offline,
+  or multiple devices are ready.
+
 ## 0.2.0 — 2026-10-17 (Experimental)
 
 Changes since `v0.1.0`.

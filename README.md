@@ -85,10 +85,13 @@ disconnect, reconnect and run again. One session can run per user.
 
 ## Troubleshooting
 
-- **Phone missing:** check the USB cable and the USB debugging authorization prompt.
+- **Phone missing:** check the USB data cable and enable USB debugging.
   On Linux, you may need Android udev rules. On Windows, if the phone is not listed,
   install your manufacturer's [OEM USB Driver](https://developer.android.com/studio/run/oem-usb)
   (or [Google USB Driver](https://developer.android.com/studio/run/win-usb) for Pixel devices).
+- **Phone unauthorized:** unlock it and tap **Allow** on the USB debugging prompt.
+- **Phone offline:** reconnect it and try again.
+- **Multiple phones ready:** run `adb-speaker stream --serial SERIAL` with a serial from the error message.
 - **No sound:** check phone volume, then try `tone`. If it works, check desktop
   capture; on Linux, `pactl info` should reach your audio server. Windows output
   must be mono/stereo at 48 kHz or below.

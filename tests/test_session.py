@@ -130,12 +130,22 @@ time.sleep(30)
             os.close(read_fd)
             os.close(write_fd)
 
-    def test_device_selection(self):
-        for rows, expected in [
-            ("", None),
-            ("one unauthorized\n", None),
-            ("one device\ntwo device\n", None),
-            ("one device\ntwo offline\n", "one"),
+    def test_automatic_device_selection(self):
+        with patch.object(
+            speaker.subprocess,
+            "check_output",
+            return_value="List of devices attached\none\tdevice\ntwo\toffline\n",
+        ):
+            self.assertEqual(speaker.choose_device(None), ["adb", "-s", "one"])
+
+    def test_automatic_device_selection_errors(self):
+        for rows, message in [
+            ("", r"No ADB devices found.*USB debugging"),
+            ("one\tunauthorized\n", r"unauthorized.*tap Allow"),
+            ("one\toffline\n", r"offline.*Reconnect"),
+            ("one\tunauthorized\ntwo\toffline\n", r"tap Allow.*Reconnect"),
+            ("one\tdevice\ntwo\tdevice\n", r"one, two.*--serial SERIAL"),
+            ("one\trecovery\n", r"No ADB device is ready.*adb devices"),
         ]:
             with (
                 self.subTest(rows=rows),
@@ -145,11 +155,10 @@ time.sleep(30)
                     return_value="List of devices attached\n" + rows,
                 ),
             ):
-                if expected:
-                    self.assertEqual(speaker.choose_device(None), ["adb", "-s", expected])
-                else:
-                    with self.assertRaisesRegex(RuntimeError, "exactly one authorized"):
-                        speaker.choose_device(None)
+                with self.assertRaisesRegex(RuntimeError, message):
+                    speaker.choose_device(None)
+
+    def test_explicit_device_selection(self):
         with patch.object(speaker.subprocess, "run") as run:
             self.assertEqual(speaker.choose_device("chosen"), ["adb", "-s", "chosen"])
             run.assert_called_once_with(
