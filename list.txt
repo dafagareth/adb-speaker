@@ -1,0 +1,24 @@
+Planned improvements after v0.2.0, in priority order
+
+[ ] 1. Windows double-click launcher
+    Bundle stream.bat beside adb-speaker.exe. Start streaming using a path
+    relative to the launcher and keep the window open after exit so errors
+    remain visible. Test double-click startup, Ctrl+C, and missing devices.
+
+[ ] 2. Windows receiver statistics (--watch)
+    Keep exec-in for audio and add a separate return channel for statistics.
+    Options include an ADB-forwarded socket or receiver-written logcat entries.
+    Forwarding alone is insufficient: update the receiver and host reader,
+    isolate each session, drain output, and clean up on disconnect.
+    Report throughput, buffer size, and underruns without claiming to measure
+    end-to-end latency. Check that monitoring does not disrupt playback.
+
+[ ] 3. Windows input above 48 kHz
+    Add anti-aliasing filtering and downsampling for 96/192 kHz sources.
+    Design and test the filter rather than relying on linear interpolation.
+    Preserve filter state across packets and handle discontinuities.
+    Test alias rejection, output duration, chunk boundaries, CPU use, and delay.
+    Keep the existing 48 kHz fast path. Until supported, retain the clear error
+    directing users to select 48 kHz in Windows Sound Settings.
+
+These are planned changes, not features included in v0.2.0.
