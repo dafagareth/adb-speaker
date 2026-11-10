@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a double-click streaming launcher to the Windows portable ZIP. It keeps
+  the console open when startup or playback fails.
 - Show what to do when no ADB device is found, a device is unauthorized or offline,
   or multiple devices are ready.
 

@@ -1,5 +1,6 @@
 # Enforce LF line endings for text files across all operating systems
 * text=auto eol=lf
+packaging/windows/stream.bat text eol=crlf
 
 # Binary files
 *.dex binary

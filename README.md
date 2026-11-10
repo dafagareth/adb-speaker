@@ -49,12 +49,13 @@ See the [Android wireless ADB guide](https://developer.android.com/tools/adb#con
 ### Portable Releases (Recommended — Zero Dependencies)
 
 Download a package from [Releases](https://github.com/dafagareth/adb-speaker/releases),
-extract it, and run from a terminal:
+then extract the full archive:
 
-- **Windows:** `.\adb-speaker.exe stream` (bundles Python, WASAPI capture helper, and ADB)
+- **Windows:** Double-click `stream.bat` if included, or run `.\adb-speaker.exe stream`
+  in CMD or PowerShell. The ZIP bundles Python, the WASAPI capture helper, and ADB.
 - **Linux (x86_64, glibc 2.35+):** `./adb-speaker stream` (bundles Python, ADB, and `parec`; requires PulseAudio or PipeWire-Pulse)
 
-On Windows, double-clicking `adb-speaker.exe` shows help and closes; use CMD or PowerShell.
+The Windows launcher keeps the window open on errors. Press Ctrl+C to stop playback.
 
 ### From Source (pip install)
 

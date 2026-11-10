@@ -3,6 +3,7 @@ recursive-include native *.java *.cpp *.hpp CMakeLists.txt
 recursive-include tests *.py *.cpp
 recursive-include scripts *.py
 recursive-include packaging *.py *.sh Dockerfile
+include packaging/windows/stream.bat
 recursive-include docs *.md
 recursive-include .github *.yml
 include .dockerignore .gitignore

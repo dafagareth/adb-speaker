@@ -97,6 +97,7 @@ for name in ("adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll"):
 
 for name in ("README.md", "LICENSE", "CHANGELOG.md"):
     shutil.copy2(root / name, bundle / name)
+shutil.copy2(Path(__file__).with_name("stream.bat"), bundle / "stream.bat")
 shutil.copytree(root / "docs", bundle / "docs", dirs_exist_ok=True)
 licenses = bundle / "licenses"
 licenses.mkdir(exist_ok=True)
@@ -130,10 +131,12 @@ subprocess.run(
     stdout=subprocess.DEVNULL,
     timeout=15,
 )
+env["ANDROID_SERIAL"] = "nonexistent-smoke-device"
 result = subprocess.run(
-    [str(bundle / "adb-speaker.exe"), "tone", "--serial", "nonexistent-smoke-device"],
+    [os.environ["COMSPEC"], "/d", "/c", r".\stream.bat"],
     cwd=bundle,
     env=env,
+    input="\n",
     capture_output=True,
     text=True,
     timeout=15,
