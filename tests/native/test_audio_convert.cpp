@@ -1,12 +1,11 @@
+// Copyright (c) 2026 dafagareth
+// SPDX-License-Identifier: MIT
+
 /*
- * Project: adb-speaker
- * File: test_audio_convert.cpp
- * Description: Unit tests for sample conversion, clipping, NaN handling, and resampling.
- *
- * Copyright (c) 2026 dafagareth
- * SPDX-License-Identifier: MIT
- * Licensed under the MIT License (see LICENSE in repository root).
- * https://opensource.org/licenses/MIT
+ * Convert fixed samples and check clipping, NaN handling, PCM16 passthrough,
+ * mono duplication, and sample decoding. Resample audio, reset the converter, and
+ * check silence and rejection of high rates. Convert the same signal in one buffer
+ * and in chunks, then compare the results. Exit with an error when a check fails.
  */
 #include "../../native/windows/audio_convert.hpp"
 #include <cstdlib>

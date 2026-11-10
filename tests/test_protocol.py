@@ -1,13 +1,11 @@
+"""Feed clock probes and replies with known times into PacketClock.
+Check offset calculation, sample selection and expiry, and rejection of bad replies.
+Remove PCM from a queue and check the remaining read times. On POSIX, feed replies
+through pipes to test fragmented and oversized startup messages.
 """
-Project: adb-speaker
-Module: test_protocol.py
-Description: Clock offset estimation and PCM timestamp preservation, without a phone.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 from collections import deque
 import os

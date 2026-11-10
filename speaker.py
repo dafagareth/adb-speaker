@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
+"""Add this checkout's src/ directory to the Python import path, then import cli.run.
+Call run() when the file is executed as a script. PyInstaller uses this launcher too.
 """
-Project: adb-speaker
-Module: speaker.py
-Description: Compatibility launcher for existing source checkouts.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 import sys
 from pathlib import Path

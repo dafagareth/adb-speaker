@@ -1,17 +1,12 @@
-/*
- * Project: adb-speaker
- * File: PlaybackDelay.java
- * Description: Host-read-to-presentation delay estimation from advancing AudioTrack timestamps.
- *
- * Copyright (c) 2026 dafagareth
- * SPDX-License-Identifier: MIT
- * Licensed under the MIT License (see LICENSE in repository root).
- * https://opensource.org/licenses/MIT
- */
+// Copyright (c) 2026 dafagareth
+// SPDX-License-Identifier: MIT
 
 /**
- * Estimates host-read-to-presentation delay from advancing AudioTrack timestamps.
- * Kept free of Android imports so host tests can verify edge cases with standard javac/java.
+ * Check that the AudioTrack timestamp is recent and has advanced since the last
+ * sample without a new underrun. Find the packet's frame relative to that timestamp,
+ * allowing for the 32-bit counter to wrap. Convert the frame difference to time at
+ * 48 kHz and subtract the packet's mapped host read time. Return -1 if a check fails
+ * or the calculated delay is negative.
  */
 final class PlaybackDelay {
     private long previousFrame;

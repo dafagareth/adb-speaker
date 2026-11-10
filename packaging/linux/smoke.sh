@@ -1,12 +1,11 @@
 #!/bin/sh
-# Project: adb-speaker
-# File: smoke.sh (Linux Packaging)
-# Description: Verifies portable Linux archive execution inside a clean container.
-#
 # Copyright (c) 2026 dafagareth
 # SPDX-License-Identifier: MIT
-# Licensed under the MIT License (see LICENSE in repository root).
-# https://opensource.org/licenses/MIT
+
+# Extract the portable tarball into a temporary folder and mount it read-only
+# in an Ubuntu container with networking disabled. Run CLI help with an empty PATH,
+# then run the bundled ADB and parec. Remove the temporary folder on exit.
+
 set -eu
 package_test_dir=$(mktemp -d)
 trap 'rm -rf "$package_test_dir"' EXIT HUP INT TERM

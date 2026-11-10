@@ -1,13 +1,13 @@
+"""Select a phone, take the session lock, and push the receiver to Android.
+Wait for READY before starting capture. On Linux, send timestamped PCM packets
+and refresh the clock mapping while keeping the capture queue within 50 ms.
+On Windows, poll the receiver's ready file and pipe WASAPI audio through exec-in.
+When playback ends or fails, stop capture, close the pipes, and try to remove the
+session's Android process and temporary files.
 """
-Project: adb-speaker
-Module: session.py
-Description: Device selection, session locking, audio capture, process lifecycle, and Linux relay.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 from collections import deque
 from contextlib import contextmanager

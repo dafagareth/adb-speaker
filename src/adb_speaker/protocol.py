@@ -1,13 +1,12 @@
+"""Pack audio and clock probes into the Linux packet format.
+Match SYNC replies to probes and keep samples with a round trip of at most 50 ms.
+Use the lowest round trip from recent samples to map host read times to phone time;
+return zero when none remain. When removing queued PCM, keep the original read
+times for the bytes left in the queue.
 """
-Project: adb-speaker
-Module: protocol.py
-Description: Audio packet framing, RTT clock synchronization, and frame timing.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 from collections import deque
 import os

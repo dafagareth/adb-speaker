@@ -1,3 +1,6 @@
+# Add native code, tests, scripts, docs, and build configuration to the source
+# archive. The package-data settings in pyproject.toml include receiver assets.
+
 include Makefile speaker.py LICENSE CHANGELOG.md SECURITY.md
 recursive-include native *.java *.cpp *.hpp CMakeLists.txt
 recursive-include tests *.py *.cpp

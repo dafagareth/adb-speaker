@@ -1,13 +1,6 @@
-/*
- * Project: adb-speaker
- * File: AdbSpeaker.java
- * Description: Android receiver playing stereo 48kHz 16-bit PCM via AudioTrack.
- *
- * Copyright (c) 2026 dafagareth
- * SPDX-License-Identifier: MIT
- * Licensed under the MIT License (see LICENSE in repository root).
- * https://opensource.org/licenses/MIT
- */
+// Copyright (c) 2026 dafagareth
+// SPDX-License-Identifier: MIT
+
 import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
@@ -24,7 +17,13 @@ import java.io.BufferedInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
-/** Receives stereo 48 kHz signed little-endian 16-bit PCM over ADB stdin. */
+/**
+ * Check the arguments, set up stereo 48 kHz PCM16 playback, and signal READY.
+ * Read raw PCM or packet-v1 input. Answer clock probes, skip audio packets over
+ * 100 ms old, and write complete frames to AudioTrack. When watch is enabled,
+ * report playback counters and estimated presentation delay to stderr.
+ * At EOF, wait up to two seconds for playback to drain, then release AudioTrack.
+ */
 public final class AdbSpeaker {
     private static final int RATE = 48000;
     private static final int FRAME_BYTES = 4;

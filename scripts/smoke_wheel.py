@@ -1,13 +1,11 @@
+"""Install the single wheel in dist/ into a temporary virtual environment.
+Run CLI help and version outside the checkout with an empty PATH, then check that
+the installed package contains the receiver DEX. Run tone and check that it reports
+missing ADB. Remove the temporary environment when finished.
 """
-Project: adb-speaker
-Module: smoke_wheel.py
-Description: Install the built wheel into a fresh venv and run CLI smoke tests.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 import os
 from pathlib import Path

@@ -1,14 +1,13 @@
-/*
- * Project: adb-speaker
- * File: wasapi_capture.cpp
- * Description: Minimal WASAPI loopback capture helper emitting stereo PCM (48kHz/16-bit).
- *
- * Copyright (c) 2026 dafagareth
- * SPDX-License-Identifier: MIT
- * Licensed under the MIT License (see LICENSE in repository root).
- * https://opensource.org/licenses/MIT
- */
+// Copyright (c) 2026 dafagareth
+// SPDX-License-Identifier: MIT
 
+/*
+ * Open the default Windows playback device and check its audio format.
+ * Start WASAPI loopback capture and wait for audio packets. Replace silent packets
+ * with zeros, reset the resampler after capture gaps, and convert to stereo 48 kHz
+ * PCM16. Write PCM to binary stdout and errors to stderr. Stop capture and release
+ * resources when the loop ends.
+ */
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <audioclient.h>

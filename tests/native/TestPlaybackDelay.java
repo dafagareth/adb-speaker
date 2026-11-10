@@ -1,12 +1,11 @@
+// Copyright (c) 2026 dafagareth
+// SPDX-License-Identifier: MIT
+
 /*
- * Project: adb-speaker
- * File: TestPlaybackDelay.java
- * Description: Unit tests for PlaybackDelay timestamp progression, underrun resets, and 32-bit wrap.
- *
- * Copyright (c) 2026 dafagareth
- * SPDX-License-Identifier: MIT
- * Licensed under the MIT License (see LICENSE in repository root).
- * https://opensource.org/licenses/MIT
+ * Feed known frame positions and times into PlaybackDelay and check the results.
+ * Repeat timestamps, change the underrun count, and supply missing, stale, future,
+ * or invalid timing. Check recovery, frame-counter wrap, and negative delays.
+ * Throw AssertionError if a result differs from the expected value.
  */
 public final class TestPlaybackDelay {
     private static final long SECOND = 1_000_000_000L;

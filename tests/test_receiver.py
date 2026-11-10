@@ -1,13 +1,11 @@
+"""Use ADB_SPEAKER_TEST_SERIAL to select a phone; skip the tests when it is unset.
+Push a receiver copy with a unique filename, wait for READY, then send muted raw
+or timestamped PCM, including stale packets and broken input. Read the playback
+or error summary, stop the process, and remove the test copy from the phone.
 """
-Project: adb-speaker
-Module: test_receiver.py
-Description: Hardware device integration tests: ADB_SPEAKER_TEST_SERIAL=SERIAL python -m unittest test_receiver.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 import os
 import struct

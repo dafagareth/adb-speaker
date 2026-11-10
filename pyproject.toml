@@ -1,3 +1,7 @@
+# Read the version from the package and build from src/ with setuptools.
+# Include receiver assets and install adb-speaker as cli.run. Define package metadata,
+# pinned development tools, and Ruff settings here.
+
 [build-system]
 requires = ["setuptools==80.9.0"]
 build-backend = "setuptools.build_meta"

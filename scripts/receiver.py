@@ -1,13 +1,11 @@
+"""Find javac and an Android SDK, compile the Java sources, then run D8.
+Build writes classes.dex into build/. Bundle also copies it into package assets
+and saves the source hash. Check compares that hash and checks that the DEX exists;
+it does not rebuild or compare the bytecode.
 """
-Project: adb-speaker
-Module: receiver.py
-Description: Build, bundle, and verify Android receiver DEX bytecode and source markers.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 import argparse
 import hashlib

@@ -1,13 +1,10 @@
+"""Pass command-line arguments to the CLI while mocking tool lookup and playback.
+Check defaults, invalid values, and platform restrictions before inspecting the
+session call. Test that help works without ADB and bundled helpers come first on PATH.
 """
-Project: adb-speaker
-Module: test_cli.py
-Description: Unit tests for CLI arguments, options, platform checks, and frozen path setup.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 import contextlib
 import io

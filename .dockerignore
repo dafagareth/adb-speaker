@@ -1,3 +1,6 @@
+# Exclude Git files, virtualenvs, caches, logs, and build outputs when copying
+# the checkout into the Docker build context.
+
 .git
 build
 dist

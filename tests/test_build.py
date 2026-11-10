@@ -1,13 +1,11 @@
+"""Create temporary source and SDK folders, then mock the build commands.
+Check errors for missing tools, fallback from stale SDK paths, and source hashes
+across line endings. Check that matching receiver markers pass and missing files
+or mismatched markers fail.
 """
-Project: adb-speaker
-Module: test_build.py
-Description: Unit tests for receiver compilation, SDK lookup, and source marker verification.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 import hashlib
 import os

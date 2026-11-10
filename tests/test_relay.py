@@ -1,13 +1,9 @@
+"""Exercise relay backpressure, partial frames, and clock replies without a phone.
+Linux-only fixtures preserve capture timestamps across pauses and queue trimming.
 """
-Project: adb-speaker
-Module: test_relay.py
-Description: Unit tests for stalled ADB writes and fragmented stereo PCM relay.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 import contextlib
 import io

@@ -1,13 +1,11 @@
+"""Check the receiver marker and bundle the CLI with PyInstaller on Linux x86_64.
+Copy ADB, parec, their libraries, docs, and license notices into the bundle, leaving
+glibc on the host. Run CLI and helper startup checks, then write the portable and
+source tarballs and their SHA-256 checksums.
 """
-Project: adb-speaker
-Module: build.py (Linux Packaging)
-Description: Builds standalone relocatable Linux x86_64 portable bundle.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 import hashlib
 import importlib.metadata

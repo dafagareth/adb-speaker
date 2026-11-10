@@ -1,3 +1,7 @@
+# Install build tools in Ubuntu 22.04, copy the checkout, and install the package.
+# Run host tests and the receiver check, then build the Linux archives.
+# Copy the tarballs and checksums into the final stage for Docker --output.
+
 FROM ubuntu:22.04 AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends make python3 python3-pip python3-dev binutils adb pulseaudio-utils ca-certificates && rm -rf /var/lib/apt/lists/*

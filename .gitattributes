@@ -1,4 +1,6 @@
-# Enforce LF line endings for text files across all operating systems
+# Use LF for text files. Mark the listed binary formats so Git leaves their
+# bytes unchanged.
+
 * text=auto eol=lf
 packaging/windows/stream.bat text eol=crlf
 

@@ -1,3 +1,6 @@
+# Ignore local environments, caches, build outputs, recordings, and compiler files.
+# Keep the packaged Android DEX tracked.
+
 /build/
 /dist/
 *.egg-info/

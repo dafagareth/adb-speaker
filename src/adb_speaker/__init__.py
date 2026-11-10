@@ -1,13 +1,9 @@
+"""Set the package version, then import and export the CLI's run function.
+Setuptools reads __version__ when building the package.
 """
-Project: adb-speaker
-Module: __init__.py
-Description: Package entry point and public API re-exports for adb-speaker.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 __version__ = "0.2.0"
 

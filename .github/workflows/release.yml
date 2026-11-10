@@ -1,3 +1,7 @@
+# Check that the supplied tag matches a successful Check run and package version.
+# Download that run's artifacts, verify their checksums, and combine the checksum
+# files. Create a draft release with those files attached for manual publication.
+
 name: Draft release
 on:
   workflow_dispatch:

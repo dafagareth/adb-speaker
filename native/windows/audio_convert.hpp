@@ -1,12 +1,12 @@
+// Copyright (c) 2026 dafagareth
+// SPDX-License-Identifier: MIT
+
 /*
- * Project: adb-speaker
- * File: audio_convert.hpp
- * Description: Audio sample format conversion (float/int24/int32 to s16) and rate resampling.
- *
- * Copyright (c) 2026 dafagareth
- * SPDX-License-Identifier: MIT
- * Licensed under the MIT License (see LICENSE in repository root).
- * https://opensource.org/licenses/MIT
+ * Copy 48 kHz stereo PCM16 directly to the output. For other supported formats,
+ * read samples as floats and duplicate mono into both channels. Convert to PCM16
+ * at 48 kHz, or use linear interpolation to raise a lower sample rate to 48 kHz.
+ * Keep the previous sample between packets and clear it on reset. Reject rates
+ * above 48 kHz.
  */
 #pragma once
 #include <algorithm>

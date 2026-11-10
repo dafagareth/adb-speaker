@@ -1,11 +1,9 @@
-# Project: adb-speaker
-# File: Makefile
-# Description: Development workflow targets for test, lint, format, build, and packaging.
-#
 # Copyright (c) 2026 dafagareth
 # SPDX-License-Identifier: MIT
-# Licensed under the MIT License (see LICENSE in repository root).
-# https://opensource.org/licenses/MIT
+
+# Run tests, lint, receiver builds, and Linux packaging through make targets.
+# Use scripts/receiver.py for Java builds and bundling, Docker for portable archives,
+# and smoke.sh to check the archive. Clean removes build outputs and caches.
 
 .DEFAULT_GOAL := help
 PYTHON ?= python3

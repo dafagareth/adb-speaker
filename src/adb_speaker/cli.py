@@ -1,13 +1,11 @@
+"""Add bundled helpers to PATH, then read and check the command-line arguments.
+Choose the capture backend and gain for the requested platform and mode, check
+that the required tools exist, and pass the selected phone to session.receive().
+Report errors to stderr; handle Ctrl+C and SIGTERM by letting the session clean up.
 """
-Project: adb-speaker
-Module: cli.py
-Description: Command-line interface argument parsing, validation, and environment setup.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 import argparse
 import math

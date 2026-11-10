@@ -1,3 +1,7 @@
+# Run Python checks and converter tests on Linux and Windows, and build the
+# Android receiver in a separate job. Once both jobs pass, build portable packages
+# using that receiver and upload the archives and checksums.
+
 name: Check
 on: [push, pull_request, workflow_dispatch]
 permissions:

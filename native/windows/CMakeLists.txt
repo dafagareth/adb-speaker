@@ -1,11 +1,9 @@
-# Project: adb-speaker
-# File: CMakeLists.txt
-# Description: CMake configuration for WASAPI capture helper and conversion unit tests.
-#
 # Copyright (c) 2026 dafagareth
 # SPDX-License-Identifier: MIT
-# Licensed under the MIT License (see LICENSE in repository root).
-# https://opensource.org/licenses/MIT
+
+# Set C++17 and compiler warnings. On Windows, build the WASAPI helper and link
+# its COM libraries; with MSVC, use the static runtime. When testing is enabled,
+# build the converter test and register it with CTest on either platform.
 
 cmake_minimum_required(VERSION 3.16)
 project(adb_speaker_capture LANGUAGES CXX)

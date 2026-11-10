@@ -1,13 +1,9 @@
+"""Add the checkout's src/ directory to sys.path if it is missing.
+This runs when tests are imported through the tests package.
 """
-Project: adb-speaker
-Module: __init__.py (Tests)
-Description: Test suite environment configuration ensuring src/ is in search path.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 import sys
 from pathlib import Path

@@ -1,13 +1,10 @@
+"""Compile PlaybackDelay and its Java test into a temporary directory.
+Run the test with java and fail if compilation or execution fails. Skip when the
+JDK is missing, and remove the temporary files when finished.
 """
-Project: adb-speaker
-Module: test_playback_delay.py
-Description: Host unit test runner for receiver presentation delay estimation without Android SDK stubs.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 from pathlib import Path
 import shutil

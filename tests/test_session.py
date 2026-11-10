@@ -1,13 +1,11 @@
+"""Set up mocked ADB calls and temporary subprocesses, then run playback sessions.
+Check phone selection, readiness, locks, capture commands, and generated tones.
+Cause disconnects and startup/playback failures, then check that capture stops,
+the lock is released, and cleanup is attempted. Mock Windows APIs for their tests.
 """
-Project: adb-speaker
-Module: test_session.py
-Description: Unit tests for device selection, session locking, capture commands, and lifecycle.
 
-Copyright (c) 2026 dafagareth
-SPDX-License-Identifier: MIT
-Licensed under the MIT License (see LICENSE in repository root).
-https://opensource.org/licenses/MIT
-"""
+# Copyright (c) 2026 dafagareth
+# SPDX-License-Identifier: MIT
 
 import contextlib
 import io
